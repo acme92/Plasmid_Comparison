@@ -52,6 +52,11 @@ for tup in score_list:
 
 	results_file.write("Score:\t\t"+str(score_db[count]['score'])+"\n\n")
 
+	results_file.write("Decomposition of weighted lengths HyAsP|MOBsuite|Common:\t\t")
+	for x in score_db[count]['decomposition']:
+		results_file.write(str(float(x))+"|")
+	results_file.write("\n\n")
+
 	results_file.write("HyAsP plasmids:\n")
 	for x in score_db[count]['left_dict']:
 		results_file.write(str(x)+":\t")

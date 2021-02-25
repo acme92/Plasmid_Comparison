@@ -24,4 +24,5 @@ common_isolates = HyAsP_isolates.intersection(MOBsuite_isolates)
 #print(len(common_isolates))
 
 for isolate_id in common_isolates:
-	os.system("python compare_plasmids.py "+isolate_id)
+	print(isolate_id)
+	os.system("python plasmid_comparison_main.py "+isolate_id)

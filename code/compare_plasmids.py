@@ -70,7 +70,24 @@ def create_score_db(iter_no, score_db):
 	score_db[iter_no]['right_splits'] = []
 	score_db[iter_no]['left_dict'] = []
 	score_db[iter_no]['right_dict'] = []
+	score_db[iter_no]['decomposition'] = []
 	return score_db
+
+#Remove contigs unique to a single tool but include them in the score
+def remove_unique_contigs(plasmids_dict, common_contigs):
+	total_len = 0
+	new_dict = copy.deepcopy(plasmids_dict)
+	for p in plasmids_dict:
+		for c in plasmids_dict[p]:
+			if c not in common_contigs:
+				new_dict[p].pop(c)
+				total_len += plasmids_dict[p][c]['length']
+		if len(new_dict[p].keys()) == 0:
+			new_dict.pop(p)				
+	return new_dict, total_len			
+
+
+
 
 #Adds nodes to the bipartite graph G
 def add_nodes(G, left_dict, right_dict):
@@ -191,7 +208,27 @@ def run_compare_plasmids(HyAsP_plasmids, MOBsuite_plasmids):
 		right_dict = copy.deepcopy(MOBsuite_plasmids)	
 		left_dict, right_dict = rename_by_pmutn(x, left_dict, right_dict, ref_array)
 		score_db[count]['left_dict'] = left_dict
-		score_db[count]['right_dict'] = right_dict	
+		score_db[count]['right_dict'] = right_dict
+
+		left_keys, right_keys = set(), set()
+		for x in left_dict:
+			left_keys.update(set(left_dict[x].keys()))
+		for x in right_dict:
+			right_keys.update(set(right_dict[x].keys()))
+		common_contigs = left_keys.intersection(right_keys)	
+		#print(left_keys)
+		#print(right_keys)		
+		#Delete contigs unique to a single tool
+		left_dict, left_only_len = remove_unique_contigs(left_dict, common_contigs)
+		right_dict, right_only_len = remove_unique_contigs(right_dict, common_contigs)
+
+		component_scores= []	#Keep track of scores for each component. 
+								#If component involves perfect match between plasmids, score should be 0.
+		component_scores.append((1, left_only_len))
+		component_scores.append((1, right_only_len))
+		score_db[count]['decomposition'].append(left_only_len)
+		score_db[count]['decomposition'].append(right_only_len)								
+
 
 		#Create graph with vertices named according to permutation and obtain connected components
 		B = nx.Graph()
@@ -200,8 +237,7 @@ def run_compare_plasmids(HyAsP_plasmids, MOBsuite_plasmids):
 		A = [B.subgraph(c) for c in nx.connected_components(B)]
 		n_conn_comp = len(list(A))
 		
-		component_scores= []	#Keep track of scores for each component. 
-								#If component involves perfect match between plasmids, score should be 0.							
+							
 		for i in range(n_conn_comp):
 			C = list(A)[i]
 			left, right = nx.bipartite.sets(C)	#Split the component according to bipartite sets
@@ -259,13 +295,18 @@ def run_compare_plasmids(HyAsP_plasmids, MOBsuite_plasmids):
 
 				normalized_cost = (left_cost/left_len + right_cost/right_len)/2
 
-				component_scores.append((normalized_cost, left_len+right_len))	
+				component_scores.append((normalized_cost, left_len))	
 
-		#print(component_scores)	
-		
+		#print(component_scores)
+		weighted_len = 0
+		for pair in component_scores[2:]:
+			weighted_len += pair[0]*pair[1]
+		score_db[count]['decomposition'].append(weighted_len)		
+		#print(score_db[count]['decomposition'])
 		score = get_overall_score(component_scores)	
 		score_db[count]['score'] = score	
 		count+=1
+
 		print("\n")	
 
 	return score_db		
