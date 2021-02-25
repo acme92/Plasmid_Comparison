@@ -1,0 +1,23 @@
+Combination 0
+Score:		0.19522299329440265
+
+Decomposition of weighted lengths HyAsP|MOBsuite|Common:		16682.0|0.0|0.0|
+
+HyAsP plasmids:
+1:	41,26,28,47,33,
+2:	14_0,
+4:	23,
+5:	27,
+
+MOBsuite plasmids:
+AB530:	14_0,
+
+HyAsP splits:
+{'14_0'}
+
+MOBsuite splits:
+{'14_0'}
+#-------------------------
+
+
+
